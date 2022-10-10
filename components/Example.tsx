@@ -5,25 +5,9 @@ import { Fragment, useEffect, useState } from 'react'
 import { Combobox, Dialog, Transition } from '@headlessui/react'
 import { SearchIcon } from '@heroicons/react/solid'
 import { EmojiHappyIcon } from '@heroicons/react/outline'
+import { useDebouncedCallback } from 'use-debounce'
 import RepositoryOption from './RepositoryOption'
-
-/**
- * 仓库数据的类型
- */
-type Repository = {
-  id: string
-  name: string
-  full_name: string
-  open_issues_count: number
-  stargazers_count: number
-  forks_count: number
-  url: string
-  language: string
-  owner: {
-    login: string
-    avatar_url: string
-  }
-}
+import type { Repository } from './RepositoryOption'
 
 type APIResponse = { items: Repository[] }
 
@@ -37,6 +21,30 @@ export function classNames(...classes: any[]) {
 
 export default function Example() {
   const [open, setOpen] = useState(true)
+  const [rawQuery, setRawQuery] = useState('')
+  const [repositories, setRepositories] = useState<Repository[]>([])
+  const query = rawQuery.toLowerCase().replace(/^[#>]/, '')
+
+  const debounced = useDebouncedCallback((value) => {
+    setRawQuery(value)
+  }, 500)
+
+  const fetchRepositories = (q: string): Promise<APIResponse> => {
+    return fetch(`/api/search?q=${q}`)
+      .then((res) => res.json())
+      .then((data) => data)
+  }
+
+  useEffect(() => {
+    if (!query) {
+      setRepositories([])
+      return
+    }
+
+    fetchRepositories(query).then((data) => {
+      setRepositories(data.items)
+    })
+  }, [query])
 
   useEffect(() => {
     if (!open) {
@@ -45,9 +53,6 @@ export default function Example() {
       }, 500)
     }
   }, [open])
-
-  const [rawQuery, setRawQuery] = useState('')
-  const query = rawQuery.toLowerCase().replace(/^[#>]/, '')
 
   return (
     <Transition.Root
@@ -94,7 +99,7 @@ export default function Example() {
                   <Combobox.Input
                     className="h-12 w-full border-0 bg-transparent pl-11 pr-4 text-gray-100 placeholder-gray-500 focus:ring-0 sm:text-sm focus:outline-0"
                     placeholder="搜索 GitHub 仓库..."
-                    onChange={(event) => setRawQuery(event.target.value)}
+                    onChange={(event) => debounced(event.target.value)}
                   />
                 </div>
 
@@ -107,9 +112,12 @@ export default function Example() {
                       仓库列表
                     </h2>
                     <ul className="-mx-4 mt-2 text-sm text-gray-700 space-y-0.5">
-                      <RepositoryOption />
-                      <RepositoryOption />
-                      <RepositoryOption />
+                      {repositories.map((repository) => (
+                        <RepositoryOption
+                          key={repository.id}
+                          repository={repository}
+                        />
+                      ))}
                     </ul>
                   </li>
                 </Combobox.Options>

@@ -9,10 +9,41 @@ import {
 import { classNames } from './Example'
 import Image from 'next/image'
 
-const RepositoryOption: FC = () => {
+/**
+ * 仓库数据的类型
+ */
+export type Repository = {
+  id: string
+  name: string
+  full_name: string
+  open_issues_count: number
+  stargazers_count: number
+  forks_count: number
+  url: string
+  language: string
+  owner: {
+    login: string
+    avatar_url: string
+  }
+}
+
+interface RepositoryOptionProps {
+  repository: Repository
+}
+
+const RepositoryOption: FC<RepositoryOptionProps> = ({
+  repository: {
+    name,
+    owner: { avatar_url, login },
+    language,
+    stargazers_count,
+    open_issues_count,
+    forks_count,
+  },
+}) => {
   return (
     <Combobox.Option
-      value={'仓库名'}
+      value={name}
       className={({ active }) =>
         classNames(
           'flex flex-col cursor-default select-none justify-center px-4 py-2 space-y-1.5',
@@ -30,7 +61,7 @@ const RepositoryOption: FC = () => {
               )}
               aria-hidden="true"
             />
-            <span className="ml-1 font-bold flex-auto truncate">仓库名</span>
+            <span className="ml-1 font-bold flex-auto truncate">{name}</span>
           </header>
 
           <footer className="flex items-center justify-between">
@@ -39,36 +70,38 @@ const RepositoryOption: FC = () => {
               <span className="flex items-center space-x-1">
                 <span className="w-4 h-4 rounded-full overflow-hidden">
                   <Image
-                    src={'https://avatars.githubusercontent.com/u/10830749?v=4'}
+                    src={avatar_url}
                     alt="User Avatar"
                     layout="responsive"
                     width={100}
                     height={100}
                   />
                 </span>
-                <span className="font-medium">CaliCastle</span>
+                <span className="font-medium">{login}</span>
               </span>
               {/* Language */}
-              <span className="flex items-center space-x-1">
-                <span className="block w-1.5 h-1.5 rounded-full bg-indigo-400" />
-                <span className="font-medium">TypeScript</span>
-              </span>
+              {language ? (
+                <span className="flex items-center space-x-1">
+                  <span className="block w-1.5 h-1.5 rounded-full bg-indigo-400" />
+                  <span className="font-medium">{language}</span>
+                </span>
+              ) : null}
             </div>
             <div className="flex items-center space-x-2.5">
               {/* Stargazers */}
               <span className="flex items-center space-x-0.5">
                 <StarIcon className="w-4 h-4" />
-                <span>195 stars</span>
+                <span>{stargazers_count} stars</span>
               </span>
               {/* Issues */}
               <span className="flex items-center space-x-0.5">
                 <InboxInIcon className="w-4 h-4" />
-                <span>99 issues</span>
+                <span>{open_issues_count} issues</span>
               </span>
               {/* Forks */}
               <span className="flex items-center space-x-0.5">
                 <ShareIcon className="w-4 h-4" />
-                <span>211 forks</span>
+                <span>{forks_count} forks</span>
               </span>
             </div>
           </footer>
